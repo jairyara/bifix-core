@@ -1,0 +1,60 @@
+---
+description: Keep ER diagram and Postman collection in sync when the API changes
+globs: "{routes/api.php,docs/er-diagram.md,postman/**,app/Http/Controllers/Api/**,app/Http/Requests/Api/**,app/Http/Resources/**,app/Models/**,database/migrations/**,database/seeders/**}"
+alwaysApply: false
+---
+
+# API docs sync (ER diagram + Postman)
+
+When you add, rename, or remove **routes**, **models**, **migrations**, **resources**, or **seeders**, update both artifacts in the same change.
+
+## Files
+
+| Artifact | Path |
+|----------|------|
+| ER diagram | `docs/er-diagram.md` |
+| Postman collection | `postman/Bifix API.postman_collection.json` |
+| Postman environment | `postman/Local.postman_environment.json` |
+
+Write all documentation in **English**.
+
+## ER diagram (`docs/er-diagram.md`)
+
+Update the Mermaid `erDiagram` when:
+
+- A table or entity is added, renamed, or removed
+- Columns or FKs change
+- Relationships or cardinality change
+
+Also update: relationships table, design notes, Laravel model/table mapping, and the endpoints table.
+
+## Postman collection
+
+For every new or changed endpoint, add or update a request under the matching folder:
+
+| Folder | Routes |
+|--------|--------|
+| Health | `GET /api/v1/health` |
+| Auth | `/api/v1/auth/*` |
+| Catalog | `brands`, `bike-models`, `battery-types` |
+| Bikes | `/api/v1/bikes` |
+| Rides | `/api/v1/bikes/{bike}/rides` |
+
+Each request must include:
+
+- Method, URL (`{{baseUrl}}/api/v1/...`), and auth (Bearer / noauth)
+- Description: body fields, response shape, error codes, Flutter usage note
+- Example saved response when useful
+- Test script to auto-set variables: `token`, `brandId`, `bikeModelId`, `bikeId`, `rideId`
+
+If `DemoSeeder` demo data changes, sync collection description, folder notes, and example payloads.
+
+After editing JSON: `python3 -m json.tool "postman/Bifix API.postman_collection.json" > /dev/null`
+
+## Definition of done
+
+Do not consider an API feature complete until:
+
+1. Tests pass
+2. `docs/er-diagram.md` reflects the schema
+3. Postman has working requests for new/changed endpoints

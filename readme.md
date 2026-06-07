@@ -6,17 +6,23 @@ Monorepo for the Bifix platform — electric bike maintenance, workshop discover
 
 | Path | Description |
 |------|-------------|
-| `api/` | Laravel REST API (Sanctum, PostgreSQL, Pest) |
+| `api/` | Laravel REST API (Sanctum, PostgreSQL, Pest, Sail) |
 
-## API setup
+## API with Sail
 
 ```bash
 cd api
 composer install
 cp .env.example .env
-php artisan key:generate
-php artisan migrate
-composer dev
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
 ```
 
-Health check: `GET http://localhost:8000/api/v1/health`
+| Service | URL / Port |
+|---------|------------|
+| API | http://localhost:8080 |
+| Health | http://localhost:8080/api/v1/health |
+| PostgreSQL (host) | `localhost:5433` — user `sail`, password `password`, db `bifix_api` |
+
+Use `./vendor/bin/sail` instead of `php artisan` for commands inside the container.

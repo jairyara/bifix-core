@@ -6,20 +6,34 @@ Part of [bifix-core](https://github.com/jairyara/bifix-core) (`api/`).
 
 ## Stack
 
-- PHP 8.3+
+- PHP 8.4 (Sail)
 - Laravel 13
-- PostgreSQL
+- PostgreSQL 18
 - Laravel Sanctum
 - Pest
 
-## Setup
+## Setup with Sail
 
 ```bash
 composer install
 cp .env.example .env
-php artisan key:generate
-php artisan migrate
-composer dev
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
 ```
 
-Health check: `GET http://localhost:8000/api/v1/health`
+| Service | URL / Port |
+|---------|------------|
+| API | http://localhost:8080 |
+| Health | http://localhost:8080/api/v1/health |
+| PostgreSQL (host) | `localhost:5433` |
+
+Default ports avoid conflicts with services on 80, 5432 and 5173. Override via `APP_PORT`, `FORWARD_DB_PORT` and `VITE_PORT` in `.env`.
+
+## Commands
+
+```bash
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan test
+./vendor/bin/sail down
+```

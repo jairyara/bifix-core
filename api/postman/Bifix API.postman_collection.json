@@ -1,0 +1,1269 @@
+{
+  "info": {
+    "name": "Bifix API",
+    "description": "REST API for Bifix — mobile Flutter app backend and integrations.\n\n---\n\n## Quick start (Postman)\n\n1. Start the API: `./vendor/bin/sail up -d`\n2. Load demo data: `./vendor/bin/sail artisan migrate:fresh --seed`\n3. Import `postman/Local.postman_environment.json`\n4. Run **Auth → Login — Test User**\n5. Run **Bikes → List My Bikes** (expect 2 bikes)\n6. Run **Rides → List Rides** (My Giant has 2 demo rides)\n\n---\n\n## Demo data (`DemoSeeder`)\n\nCommand: `php artisan db:seed --class=DemoSeeder` or `migrate:fresh --seed`\n\n### Users\n\n| Email | Password | Name | Bikes |\n|-------|----------|------|-------|\n| `test@example.com` | `password` | Test User | 2 |\n| `jane@example.com` | `password` | Jane Doe | 1 |\n\n### Catalog (brands & models)\n\n| Brand | Slug | Models |\n|-------|------|--------|\n| Giant | `giant` | Explore E+ 2, Trance X E+ 3 |\n| Trek | `trek` | Domane+ SLR 6, Powerfly 5 |\n| Specialized | `specialized` | Turbo Vado 4.0 |\n\n### Battery types\n\n| Name | Slug |\n|------|------|\n| Lead | `lead` |\n| Lithium | `lithium` |\n\n### Preloaded bikes\n\n**test@example.com:**\n- *My Giant* — Giant Explore E+ 2, SN-GIANT-001, 50 km (2 rides)\n- *Trek road bike* — Trek Domane+ SLR 6, SN-TREK-001, 890 km\n\n**jane@example.com:**\n- *Urban Vado* — Specialized Turbo Vado 4.0, SN-SPEC-001, 45 km (1 ride)\n\n---\n\n## Authentication\n\nThe API uses **Laravel Sanctum** Bearer tokens.\n\n1. Run **Login — Test User** or **Login — Jane Doe** to obtain a token.\n2. The token is saved automatically to `{{token}}`.\n3. All catalog, bike, and ride routes require `Authorization: Bearer {{token}}`.\n\n## Endpoint reference\n\n| Method | Route | Postman folder |\n|--------|-------|----------------|\n| GET | `/api/v1/health` | Health |\n| POST | `/api/v1/auth/register` | Auth |\n| POST | `/api/v1/auth/login` | Auth |\n| GET | `/api/v1/auth/me` | Auth |\n| POST | `/api/v1/auth/logout` | Auth |\n| GET | `/api/v1/brands` | Catalog |\n| GET | `/api/v1/brands/{id}` | Catalog |\n| GET | `/api/v1/bike-models` | Catalog |\n| GET | `/api/v1/bike-models/{id}` | Catalog |\n| GET | `/api/v1/battery-types` | Catalog |\n| GET | `/api/v1/bikes` | Bikes |\n| POST | `/api/v1/bikes` | Bikes |\n| GET | `/api/v1/bikes/{id}` | Bikes |\n| PUT | `/api/v1/bikes/{id}` | Bikes |\n| DELETE | `/api/v1/bikes/{id}` | Bikes |\n| GET | `/api/v1/bikes/{id}/rides` | Rides |\n| POST | `/api/v1/bikes/{id}/rides` | Rides |\n| GET | `/api/v1/bikes/{id}/rides/{id}` | Rides |\n| PUT | `/api/v1/bikes/{id}/rides/{id}` | Rides |\n| DELETE | `/api/v1/bikes/{id}/rides/{id}` | Rides |\n\nER diagram: see `docs/er-diagram.md` in the repository.\n\n## Flutter flow (register a bike)\n\n```\nLogin → GET /brands → GET /bike-models?brand_id={id} → POST /bikes → GET /bikes\n```\n\n### Recommended Flutter integration\n\n| Step | Endpoint | App usage |\n|------|----------|-----------|\n| 1 | `POST /auth/login` | Store token in `flutter_secure_storage` |\n| 2 | `GET /brands` | Brand picker (cache locally) |\n| 3 | `GET /bike-models?brand_id=` | Model picker filtered by brand |\n| 4 | `POST /bikes` | Registration form with `bike_model_id` |\n| 5 | `GET /bikes` | \"My bikes\" list |\n| 6 | `POST /bikes/{id}/rides` | Log a ride (updates odometer) |\n| 7 | `GET /bikes/{id}/rides` | Ride history |\n\n### Common headers (Flutter / Dio)\n\n```dart\nheaders: {\n  'Accept': 'application/json',\n  'Content-Type': 'application/json',\n  'Authorization': 'Bearer $token',\n}\n```\n\n### Response format\n\n- Single resource: `{ \"data\": { ... } }`\n- Collections: `{ \"data\": [ ... ] }`\n- Validation errors (422): `{ \"message\": \"...\", \"errors\": { \"field\": [\"...\"] } }`\n- Unauthenticated (401): `{ \"message\": \"Unauthenticated.\" }`\n\n## Rate limiting\n\nLogin and Register: **10 requests/minute**.\n\n## Collection variables\n\n| Variable | Description |\n|----------|-------------|\n| `token` | Sanctum token (auto-set after login) |\n| `brandId` | Brand ID (auto-set after List Brands) |\n| `bikeModelId` | Model ID (auto-set after List Bike Models) |\n| `bikeId` | User bike ID (auto-set after List My Bikes / Create Bike) |\n| `rideId` | Ride ID (auto-set after List / Create Ride) |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "description": "API base URL"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Sanctum token (auto-set after login/register)"
+    },
+    {
+      "key": "brandId",
+      "value": "1",
+      "description": "Brand ID — auto-set after List Brands"
+    },
+    {
+      "key": "bikeModelId",
+      "value": "1",
+      "description": "Model ID — auto-set after List Bike Models"
+    },
+    {
+      "key": "bikeId",
+      "value": "1",
+      "description": "User bike ID — auto-set after List My Bikes / Create Bike"
+    },
+    {
+      "key": "rideId",
+      "value": "1",
+      "description": "Ride ID — auto-set after List / Create Ride"
+    },
+    {
+      "key": "email",
+      "value": "test@example.com",
+      "description": "Demo email (generic Login)"
+    },
+    {
+      "key": "password",
+      "value": "password",
+      "description": "Demo password"
+    },
+    {
+      "key": "device_name",
+      "value": "Postman",
+      "description": "Sanctum device name"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Service monitoring and health check endpoints.",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            },
+            "description": "Verify que el servicio esté en ejecución.\n\n**Respuesta 200:**\n```json\n{\n  \"status\": \"ok\",\n  \"service\": \"bifix-api\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"ok\",\n  \"service\": \"bifix-api\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication with Laravel Sanctum (Bearer tokens).\n\n### Demo users (after `migrate:fresh --seed`)\n\n| Request | Email | Password | Bikes | Demo rides |\n|---------|-------|----------|-------|------------|\n| **Login — Test User** | `test@example.com` | `password` | 2 | 2 on My Giant (`bikeId=1`) |\n| **Login — Jane Doe** | `jane@example.com` | `password` | 1 | 1 on Urban Vado |\n\nUse **Login — Test User**, then **Bikes → List My Bikes → Rides → List Rides**.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "        pm.environment.set('token', json.data.token);",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Response contains user and token', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data).to.have.property('user');",
+                  "    pm.expect(json.data).to.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"device_name\": \"Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register un nuevo usuario y devuelve un token de acceso.\n\n### Body (JSON)\n\n| Campo | Tipo | Requerido | Descripción |\n|-------|------|-----------|-------------|\n| `name` | string | Sí | Nombre del usuario (máx. 255) |\n| `email` | string | Sí | Email único |\n| `password` | string | Sí | Contraseña (mín. 8 caracteres) |\n| `password_confirmation` | string | Sí | Confirmación de contraseña |\n| `device_name` | string | Sí | Nombre del dispositivo/cliente |\n\n### Respuesta 201\n```json\n{\n  \"data\": {\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Jane Doe\",\n      \"email\": \"jane@example.com\",\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    \"token\": \"1|...\"\n  }\n}\n```\n\n### Errores\n- **422** — Validación fallida (email duplicado, contraseña débil, etc.)"
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Jane Doe\",\n      \"email\": \"jane@example.com\",\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    \"token\": \"1|abcdefghijklmnopqrstuvwxyz\"\n  }\n}"
+            },
+            {
+              "name": "Validation Error",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"The email has already been taken.\",\n  \"errors\": {\n    \"email\": [\n      \"The email has already been taken.\"\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "        pm.environment.set('token', json.data.token);",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains user and token', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data).to.have.property('user');",
+                  "    pm.expect(json.data).to.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"device_name\": \"{{device_name}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Autentica un usuario existente y devuelve un token de acceso.\n\nUsa las variables `{{email}}` y `{{password}}` del entorno. Tras el seed, prueba con:\n- `test@example.com` / `password` (2 bikes)\n- `jane@example.com` / `password` (1 bici)\n\nVer también **Login — Test User** y **Login — Jane Doe** con credenciales fijas.\n\n### Body (JSON)\n\n| Campo | Tipo | Requerido | Descripción |\n|-------|------|-----------|-------------|\n| `email` | string | Sí | Email del usuario |\n| `password` | string | Sí | Contraseña |\n| `device_name` | string | Sí | Nombre del dispositivo/cliente |\n\n### Respuesta 200\n```json\n{\n  \"data\": {\n    \"user\": { ... },\n    \"token\": \"2|...\"\n  }\n}\n```\n\n### Errores\n- **422** — Credenciales incorrectas\n- **429** — Rate limit excedido (10 req/min)"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Jane Doe\",\n      \"email\": \"jane@example.com\",\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    \"token\": \"2|abcdefghijklmnopqrstuvwxyz\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"The provided credentials are incorrect.\",\n  \"errors\": {\n    \"email\": [\n      \"The provided credentials are incorrect.\"\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login — Test User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "        pm.environment.set('token', json.data.token);",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Logged in as Test User', () => {",
+                  "    pm.expect(pm.response.json().data.user.email).to.eql('test@example.com');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password\",\n  \"device_name\": \"Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login con usuario demo del seeder.\n\n**Credenciales:** `test@example.com` / `password`\n\n**Datos precargados:**\n- 2 bikes (*My Giant* id=1, *Trek road bike* id=2)\n- 2 rides en My Giant (32 km + 18 km → odómetro 50 km)\n\n**Flujo recomendado:**\n1. Este request\n2. **Bikes → List My Bikes** (guarda `bikeId`)\n3. **Rides → List Rides**\n\nRequiere: `./vendor/bin/sail artisan migrate:fresh --seed`"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Test User\",\n      \"email\": \"test@example.com\",\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    \"token\": \"1|abcdefghijklmnopqrstuvwxyz\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login — Jane Doe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "        pm.environment.set('token', json.data.token);",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Logged in as Jane Doe', () => {",
+                  "    pm.expect(pm.response.json().data.user.email).to.eql('jane@example.com');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\",\n  \"device_name\": \"Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login con segunda usuaria demo del seeder.\n\n**Credenciales:** `jane@example.com` / `password`\n\n**Datos precargados:** 1 bike (*Urban Vado* — Specialized Turbo Vado 4.0)\n\nÚtil para probar aislamiento entre usuarios: las bikes de `test@example.com` no deben ser visibles con este token."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Jane Doe\",\n      \"email\": \"jane@example.com\",\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    \"token\": \"2|abcdefghijklmnopqrstuvwxyz\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains user data', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data).to.have.property('id');",
+                  "    pm.expect(json.data).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Devuelve el perfil del usuario autenticado.\n\n**Requiere:** `Authorization: Bearer {{token}}`\n\n### Respuesta 200\n```json\n{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-07T00:00:00+00:00\",\n    \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n  }\n}\n```\n\n### Errores\n- **401** — Token ausente, inválido o revocado"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-07T00:00:00+00:00\",\n    \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n  }\n}"
+            },
+            {
+              "name": "Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Unauthenticated.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', '');",
+                  "    pm.environment.set('token', '');",
+                  "}",
+                  "",
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Logout message returned', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Logged out successfully.');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revoca el token de acceso actual.\n\n**Requiere:** `Authorization: Bearer {{token}}`\n\n### Respuesta 200\n```json\n{\n  \"message\": \"Logged out successfully.\"\n}\n```\n\nTras el logout, el token queda invalidado y la variable `token` se limpia automáticamente.\n\n### Errores\n- **401** — Token ausente o inválido"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Logged out successfully.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Catalog",
+      "description": "Reference catalog (`CatalogSeeder`) for bike registration.\n\n**Flow:** List Brands → List Bike Models (`brand_id`) → Create Bike.\n\nAll demo models use Lithium (`lithium`) battery and Bosch motor.",
+      "item": [
+        {
+          "name": "List Brands",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.length > 0) {",
+                  "        pm.collectionVariables.set('brandId', json.data[0].id);",
+                  "        pm.environment.set('brandId', json.data[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands"
+              ]
+            },
+            "description": "List todas las marcas disponibles.\n\n**Flutter:** usar en un `DropdownButton` o lista searchable. Cachear con `shared_preferences` o similar.\n\n### Respuesta 200\n```json\n{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n    { \"id\": 2, \"name\": \"Trek\", \"slug\": \"trek\" }\n  ]\n}\n```"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n    { \"id\": 2, \"name\": \"Trek\", \"slug\": \"trek\" },\n    { \"id\": 3, \"name\": \"Specialized\", \"slug\": \"specialized\" }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Brand",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/brands/{{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "brands",
+                "{{brandId}}"
+              ]
+            },
+            "description": "Detail de una marca por ID.\n\n### Respuesta 200\n```json\n{\n  \"data\": { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" }\n}\n```\n\n### Errores\n- **404** — Marca no encontrada"
+          },
+          "response": []
+        },
+        {
+          "name": "List Bike Models",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.length > 0) {",
+                  "        pm.collectionVariables.set('bikeModelId', json.data[0].id);",
+                  "        pm.environment.set('bikeModelId', json.data[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bike-models?brand_id={{brandId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bike-models"
+              ],
+              "query": [
+                {
+                  "key": "brand_id",
+                  "value": "{{brandId}}",
+                  "description": "Filtrar modelos por marca (recomendado en Flutter)"
+                }
+              ]
+            },
+            "description": "List modelos de bike. Filtrar por `brand_id` tras seleccionar marca.\n\n**Flutter:** llamar con `brand_id` del paso anterior. Mostrar `name`, `range_km`, `battery_wh` en la UI.\n\n### Query params\n\n| Param | Tipo | Requerido | Descripción |\n|-------|------|-----------|-------------|\n| `brand_id` | int | No | Filtra modelos de una marca |\n\n### Respuesta 200\n```json\n{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Explore E+ 2\",\n      \"slug\": \"explore-e-2\",\n      \"year\": 2024,\n      \"frame_type\": \"city\",\n      \"motor_brand\": \"Bosch\",\n      \"battery_wh\": 500,\n      \"range_km\": 80,\n      \"brand\": { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n      \"battery_type\": { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n    }\n  ]\n}\n```"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Explore E+ 2\",\n      \"slug\": \"explore-e-2\",\n      \"year\": 2024,\n      \"frame_type\": \"city\",\n      \"motor_brand\": \"Bosch\",\n      \"battery_wh\": 500,\n      \"range_km\": 80,\n      \"brand\": { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n      \"battery_type\": { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Bike Model",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bike-models/{{bikeModelId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bike-models",
+                "{{bikeModelId}}"
+              ]
+            },
+            "description": "Detail de un modelo por ID.\n\n**Flutter:** pantalla de confirmación antes de registrar la bici.\n\n### Respuesta 200\n```json\n{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Explore E+ 2\",\n    \"slug\": \"explore-e-2\",\n    \"year\": 2024,\n    \"frame_type\": \"city\",\n    \"motor_brand\": \"Bosch\",\n    \"battery_wh\": 500,\n    \"range_km\": 80,\n    \"brand\": { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n    \"battery_type\": { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n  }\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "List Battery Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/battery-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "battery-types"
+              ]
+            },
+            "description": "List tipos de batería activos (referencia informativa).\n\n**Flutter:** mostrar como metadata en ficha de modelo; no requiere selección del usuario.\n\n### Respuesta 200\n```json\n{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Lead\", \"slug\": \"lead\" },\n    { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n  ]\n}\n```"
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    { \"id\": 1, \"name\": \"Lead\", \"slug\": \"lead\" },\n    { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bikes",
+      "description": "CRUD for authenticated user's bikes.\n\n### Demo data (`DemoSeeder`)\n\n**Test User** (`test@example.com`):\n\n| ID | Nickname | Model | Serial | Odometer |\n|----|----------|-------|--------|----------|\n| 1 | My Giant | Giant Explore E+ 2 | SN-GIANT-001 | 50 km |\n| 2 | Trek road bike | Trek Domane+ SLR 6 | SN-TREK-001 | 890 km |\n\n**Jane Doe** (`jane@example.com`):\n\n| ID | Nickname | Model | Serial | Odometer |\n|----|----------|-------|--------|----------|\n| 3 | Urban Vado | Specialized Turbo Vado 4.0 | SN-SPEC-001 | 45 km |\n\n> My Giant odometer (50 km) = sum of demo rides (32 + 18).\n\nBikes are scoped to the authenticated user. Other users' bikes return **404**.",
+      "item": [
+        {
+          "name": "List My Bikes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.length > 0) {",
+                  "        const giant = json.data.find(b => b.nickname === 'My Giant');",
+                  "        const bikeId = giant ? giant.id : json.data[0].id;",
+                  "        pm.collectionVariables.set('bikeId', bikeId);",
+                  "        pm.environment.set('bikeId', bikeId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes"
+              ]
+            },
+            "description": "List las bikes del usuario autenticado.\n\n**Demo:** tras **Login — Test User**, deberías recibir **2** bikes. Guarda `bikeId` de *My Giant* (id=1) automáticamente.\n\n**Flutter:** pantalla \"Mis bikes\". Parsear `data` como `List<Bike>`.\n\n### Respuesta 200 (Test User, con seed)\n```json\n{\n  \"data\": [\n    {\n      \"id\": 2,\n      \"nickname\": \"Trek road bike\",\n      \"serial_number\": \"SN-TREK-001\",\n      \"odometer_km\": 890,\n      \"model\": { \"name\": \"Domane+ SLR 6\", \"brand\": { \"name\": \"Trek\" } }\n    },\n    {\n      \"id\": 1,\n      \"nickname\": \"My Giant\",\n      \"serial_number\": \"SN-GIANT-001\",\n      \"odometer_km\": 50,\n      \"model\": { \"name\": \"Explore E+ 2\", \"brand\": { \"name\": \"Giant\" } }\n    }\n  ]\n}\n```\n\nOrden: más recientes primero (`latest()`)."
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 2,\n      \"serial_number\": \"SN-TREK-001\",\n      \"frame_number\": null,\n      \"nickname\": \"Trek road bike\",\n      \"color\": \"red\",\n      \"odometer_km\": 890,\n      \"purchased_at\": \"2024-06-20\",\n      \"model\": {\n        \"id\": 4,\n        \"name\": \"Domane+ SLR 6\",\n        \"slug\": \"domane-slr-6\",\n        \"year\": 2024,\n        \"frame_type\": \"road\",\n        \"motor_brand\": \"Bosch\",\n        \"battery_wh\": 360,\n        \"range_km\": 90,\n        \"brand\": { \"id\": 2, \"name\": \"Trek\", \"slug\": \"trek\" },\n        \"battery_type\": { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n      },\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    {\n      \"id\": 1,\n      \"serial_number\": \"SN-GIANT-001\",\n      \"frame_number\": \"FN-GIANT-001\",\n      \"nickname\": \"My Giant\",\n      \"color\": \"black\",\n      \"odometer_km\": 50,\n      \"purchased_at\": \"2024-01-15\",\n      \"model\": {\n        \"id\": 1,\n        \"name\": \"Explore E+ 2\",\n        \"slug\": \"explore-e-2\",\n        \"year\": 2024,\n        \"frame_type\": \"city\",\n        \"motor_brand\": \"Bosch\",\n        \"battery_wh\": 500,\n        \"range_km\": 80,\n        \"brand\": { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n        \"battery_type\": { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n      },\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Bike",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.id) {",
+                  "        pm.collectionVariables.set('bikeId', json.data.id);",
+                  "        pm.environment.set('bikeId', json.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bike_model_id\": {{bikeModelId}},\n  \"nickname\": \"My e-bike\",\n  \"serial_number\": \"SN-1234\",\n  \"frame_number\": \"FN-5678\",\n  \"color\": \"red\",\n  \"odometer_km\": 1200,\n  \"purchased_at\": \"2024-03-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes"
+              ]
+            },
+            "description": "Register una bike para el usuario autenticado.\n\n**Flutter:** enviar tras seleccionar modelo en el catálogo. Solo `bike_model_id` es obligatorio.\n\n### Body (JSON)\n\n| Campo | Tipo | Requerido | Descripción |\n|-------|------|-----------|-------------|\n| `bike_model_id` | int | **Sí** | ID del modelo (de List Bike Models) |\n| `nickname` | string | No | Apodo personal (máx. 255) |\n| `serial_number` | string | No | Número de serie (único) |\n| `frame_number` | string | No | Número de cuadro (único) |\n| `color` | string | No | Color |\n| `odometer_km` | int | No | Kilometraje acumulado (≥ 0) |\n| `purchased_at` | date | No | Fecha de compra (`YYYY-MM-DD`) |\n\n### Respuesta 201\n```json\n{\n  \"data\": { \"id\": 1, \"nickname\": \"My e-bike\", \"model\": { ... }, ... }\n}\n```\n\n### Errores\n- **422** — Validación (modelo inexistente, serial duplicado)\n- **401** — No autenticado"
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"serial_number\": \"SN-1234\",\n    \"frame_number\": \"FN-5678\",\n    \"nickname\": \"My e-bike\",\n    \"color\": \"red\",\n    \"odometer_km\": 1200,\n    \"purchased_at\": \"2024-03-15\",\n    \"model\": {\n      \"id\": 1,\n      \"name\": \"Explore E+ 2\",\n      \"slug\": \"explore-e-2\",\n      \"year\": 2024,\n      \"frame_type\": \"city\",\n      \"motor_brand\": \"Bosch\",\n      \"battery_wh\": 500,\n      \"range_km\": 80,\n      \"brand\": { \"id\": 1, \"name\": \"Giant\", \"slug\": \"giant\" },\n      \"battery_type\": { \"id\": 2, \"name\": \"Lithium\", \"slug\": \"lithium\" }\n    },\n    \"created_at\": \"2026-06-07T00:00:00+00:00\",\n    \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Bike",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}"
+              ]
+            },
+            "description": "Detail de una bike del usuario.\n\n**Flutter:** pantalla de ficha/detalle de bici.\n\n### Errores\n- **404** — Bici no encontrada o no pertenece al usuario\n- **401** — No autenticado"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Bike",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"My e-bike actualizada\",\n  \"odometer_km\": 5000,\n  \"color\": \"blue\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}"
+              ]
+            },
+            "description": "Update una bike del usuario. Envía solo los campos a modificar.\n\n**Flutter:** formulario de edición. Usar `PUT` con body parcial.\n\n### Body (JSON) — todos opcionales\n\n| Campo | Tipo | Descripción |\n|-------|------|-------------|\n| `bike_model_id` | int | Cambiar modelo |\n| `nickname` | string | Apodo |\n| `serial_number` | string | Número de serie |\n| `frame_number` | string | Número de cuadro |\n| `color` | string | Color |\n| `odometer_km` | int | Kilometraje |\n| `purchased_at` | date | Fecha de compra |\n\n### Respuesta 200\n```json\n{ \"data\": { ... } }\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Bike",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}"
+              ]
+            },
+            "description": "Delete una bike del usuario.\n\n**Flutter:** confirmar con diálogo antes de llamar. Tras éxito, refrescar lista.\n\n### Respuesta 204\nSin body.\n\n### Errores\n- **404** — Bici no encontrada o no pertenece al usuario"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rides",
+      "description": "Ride logging nested under `/bikes/{bikeId}/rides`.\n\n### Odometer sync\n\nCreating, updating, or deleting a ride automatically syncs `Bike.odometer_km`.\n\n### Demo data (My Giant, `bikeId=1` after seed)\n\n| Distance | Notes |\n|----------|-------|\n| 32 km | Commute to work |\n| 18 km | Ride home |",
+      "item": [
+        {
+          "name": "List Rides",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.length > 0) {",
+                  "        pm.collectionVariables.set('rideId', json.data[0].id);",
+                  "        pm.environment.set('rideId', json.data[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}/rides",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}",
+                "rides"
+              ]
+            },
+            "description": "List los rides de una bike del usuario.\n\n**Demo:** Login — Test User → List My Bikes → 2 rides en My Giant.\n\n**Flutter:** historial de rides en ficha de bici.\n\n### Respuesta 200 (My Giant, con seed)\n```json\n{\n  \"data\": [\n    {\n      \"id\": 2,\n      \"bike_id\": 1,\n      \"distance_km\": 18,\n      \"started_at\": \"2026-05-30T17:30:00+00:00\",\n      \"ended_at\": \"2026-05-30T18:05:00+00:00\",\n      \"notes\": \"Ride home\"\n    },\n    {\n      \"id\": 1,\n      \"bike_id\": 1,\n      \"distance_km\": 32,\n      \"started_at\": \"2026-05-28T08:00:00+00:00\",\n      \"ended_at\": \"2026-05-28T09:10:00+00:00\",\n      \"notes\": \"Commute to work\"\n    }\n  ]\n}\n```"
+          },
+          "response": [
+            {
+              "name": "OK — My Giant (demo)",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 2,\n      \"bike_id\": 1,\n      \"distance_km\": 18,\n      \"started_at\": \"2026-05-30T17:30:00+00:00\",\n      \"ended_at\": \"2026-05-30T18:05:00+00:00\",\n      \"notes\": \"Ride home\",\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    },\n    {\n      \"id\": 1,\n      \"bike_id\": 1,\n      \"distance_km\": 32,\n      \"started_at\": \"2026-05-28T08:00:00+00:00\",\n      \"ended_at\": \"2026-05-28T09:10:00+00:00\",\n      \"notes\": \"Commute to work\",\n      \"created_at\": \"2026-06-07T00:00:00+00:00\",\n      \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Ride",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.id) {",
+                  "        pm.collectionVariables.set('rideId', json.data.id);",
+                  "        pm.environment.set('rideId', json.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"distance_km\": 25,\n  \"started_at\": \"2026-06-07T07:30:00+00:00\",\n  \"ended_at\": \"2026-06-07T08:15:00+00:00\",\n  \"notes\": \"Morning ride\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}/rides",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}",
+                "rides"
+              ]
+            },
+            "description": "Register un nuevo ride. **Incrementa** `odometer_km` de la bici.\n\n**Flutter:** tras tracking GPS o entrada manual de distancia.\n\n### Body (JSON)\n\n| Campo | Tipo | Requerido | Descripción |\n|-------|------|-----------|-------------|\n| `distance_km` | int | **Sí** | Kilómetros del ride (≥ 1) |\n| `started_at` | datetime | No | Inicio (ISO 8601) |\n| `ended_at` | datetime | No | Fin (≥ started_at) |\n| `notes` | string | No | Notas (máx. 1000) |\n\n### Respuesta 201\n```json\n{\n  \"data\": {\n    \"id\": 3,\n    \"bike_id\": 1,\n    \"distance_km\": 25,\n    \"started_at\": \"2026-06-07T07:30:00+00:00\",\n    \"ended_at\": \"2026-06-07T08:15:00+00:00\",\n    \"notes\": \"Morning ride\",\n    \"created_at\": \"2026-06-07T00:00:00+00:00\",\n    \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n  }\n}\n```\n\n> Tras crear, el odómetro de la bike aumenta en `distance_km`."
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 3,\n    \"bike_id\": 1,\n    \"distance_km\": 25,\n    \"started_at\": \"2026-06-07T07:30:00+00:00\",\n    \"ended_at\": \"2026-06-07T08:15:00+00:00\",\n    \"notes\": \"Morning ride\",\n    \"created_at\": \"2026-06-07T00:00:00+00:00\",\n    \"updated_at\": \"2026-06-07T00:00:00+00:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Ride",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}/rides/{{rideId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}",
+                "rides",
+                "{{rideId}}"
+              ]
+            },
+            "description": "Detail de un ride.\n\n### Errores\n- **404** — Ride o bike no pertenecen al usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Ride",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"distance_km\": 28,\n  \"notes\": \"Distancia corregida por GPS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}/rides/{{rideId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}",
+                "rides",
+                "{{rideId}}"
+              ]
+            },
+            "description": "Update un ride. Si cambia `distance_km`, **ajusta** el odómetro de la bici."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Ride",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bikes/{{bikeId}}/rides/{{rideId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bikes",
+                "{{bikeId}}",
+                "rides",
+                "{{rideId}}"
+              ]
+            },
+            "description": "Delete un ride. **Reduce** `odometer_km` de la bici.\n\n### Respuesta 204\nSin body."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
