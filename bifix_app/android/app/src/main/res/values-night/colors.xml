@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Native splash background (dark). Negro Azulado — matches the app's
+         dark surface. -->
+    <color name="splash_background">#142129</color>
+</resources>

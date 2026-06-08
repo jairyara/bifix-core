@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Native splash background (light). Blanco Niebla — matches the app's
+         light surface so the launch screen blends into the first frame. -->
+    <color name="splash_background">#F4F7F7</color>
+</resources>
