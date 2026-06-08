@@ -264,6 +264,7 @@ class _ModeSection extends ConsumerWidget {
     final mode = ref.watch(ridingModeProvider);
     if (mode == null) return const SizedBox.shrink();
     final framing = ModeFraming.of(mode);
+    final accent = framing.accentFor(Theme.of(context).brightness);
     final profile =
         ref.watch(preferencesControllerProvider).valueOrNull?.dailyProfile;
 
@@ -284,8 +285,8 @@ class _ModeSection extends ConsumerWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: framing.accent.withValues(alpha: 0.15),
-                  child: Icon(framing.icon, color: framing.accent),
+                  backgroundColor: accent.withValues(alpha: 0.15),
+                  child: Icon(framing.icon, color: accent),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

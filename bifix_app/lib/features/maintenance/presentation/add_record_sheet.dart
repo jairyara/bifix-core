@@ -47,6 +47,7 @@ class _AddRecordSheetState extends ConsumerState<_AddRecordSheet> {
   late final TextEditingController _odometer = TextEditingController(
       text: widget.currentOdometerKm.toStringAsFixed(0));
   final _notes = TextEditingController();
+  final _cost = TextEditingController();
   DateTime _date = DateTime.now();
   bool _saving = false;
 
@@ -54,7 +55,14 @@ class _AddRecordSheetState extends ConsumerState<_AddRecordSheet> {
   void dispose() {
     _odometer.dispose();
     _notes.dispose();
+    _cost.dispose();
     super.dispose();
+  }
+
+  /// Parses the cost field (whole pesos) into cents, or null if empty.
+  int? _costCents() {
+    final pesos = int.tryParse(_cost.text);
+    return (pesos != null && pesos > 0) ? pesos * 100 : null;
   }
 
   Future<void> _pickDate() async {
@@ -80,6 +88,7 @@ class _AddRecordSheetState extends ConsumerState<_AddRecordSheet> {
             odometerKm: double.tryParse(_odometer.text.replaceAll(',', '.')) ??
                 widget.currentOdometerKm,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+            costCents: _costCents(),
           ));
       if (mounted) Navigator.of(context).pop();
     } finally {
@@ -120,6 +129,17 @@ class _AddRecordSheetState extends ConsumerState<_AddRecordSheet> {
               labelText: 'Odómetro (km)',
               helperText: 'Distancia de la bici al hacer el mantenimiento',
               prefixIcon: Icon(Icons.speed),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _cost,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: 'Costo (opcional)',
+              prefixText: '\$ ',
+              prefixIcon: Icon(Icons.payments_outlined),
             ),
           ),
           const SizedBox(height: 12),

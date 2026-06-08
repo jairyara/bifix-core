@@ -16,6 +16,7 @@ class ModeSelectionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(ridingModeProvider);
+    final brightness = Theme.of(context).brightness;
     final estimation = ModeFraming.of(RidingMode.estimation);
     final tracking = ModeFraming.of(RidingMode.tracking);
 
@@ -51,7 +52,7 @@ class ModeSelectionScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             ModeCard(
               icon: estimation.icon,
-              accent: estimation.accent,
+              accent: estimation.accentFor(brightness),
               badge: estimation.badge,
               title: estimation.title,
               description: estimation.tagline,
@@ -62,7 +63,7 @@ class ModeSelectionScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             ModeCard(
               icon: tracking.icon,
-              accent: tracking.accent,
+              accent: tracking.accentFor(brightness),
               badge: tracking.badge,
               title: tracking.title,
               description: tracking.tagline,

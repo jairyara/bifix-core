@@ -119,7 +119,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             )
                           : const Text('Iniciar sesión'),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: _loading
+                          ? null
+                          : () => context.push(Routes.forgotPassword),
+                      child: const Text('¿Olvidaste tu contraseña?'),
+                    ),
                     TextButton(
                       onPressed:
                           _loading ? null : () => context.push(Routes.register),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/settings/settings_controller.dart';
+import '../../auth/application/auth_controller.dart';
 
 /// App preferences: appearance (theme), notifications, and about.
 class SettingsScreen extends ConsumerWidget {
@@ -34,17 +35,11 @@ class SettingsScreen extends ConsumerWidget {
                   SegmentedButton<ThemeMode>(
                     segments: const [
                       ButtonSegment(
-                          value: ThemeMode.system,
-                          label: Text('Sistema'),
-                          icon: Icon(Icons.brightness_auto)),
+                          value: ThemeMode.system, label: Text('Sistema')),
                       ButtonSegment(
-                          value: ThemeMode.light,
-                          label: Text('Claro'),
-                          icon: Icon(Icons.light_mode_outlined)),
+                          value: ThemeMode.light, label: Text('Claro')),
                       ButtonSegment(
-                          value: ThemeMode.dark,
-                          label: Text('Oscuro'),
-                          icon: Icon(Icons.dark_mode_outlined)),
+                          value: ThemeMode.dark, label: Text('Oscuro')),
                     ],
                     selected: {settings.themeMode},
                     showSelectedIcon: false,
@@ -96,6 +91,18 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+          const _SectionTitle('Cuenta'),
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.delete_forever_outlined,
+                  color: Theme.of(context).colorScheme.error),
+              title: Text('Eliminar cuenta',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              subtitle: const Text('Borra tu cuenta y tus datos de forma permanente.'),
+              onTap: () => _confirmDelete(context, ref),
+            ),
+          ),
+          const SizedBox(height: 16),
           const _SectionTitle('Acerca de'),
           const Card(
             child: ListTile(
@@ -107,6 +114,33 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: const Text(
+            'Esta acción es permanente. Se borrará tu cuenta junto con tus '
+            'bicicletas, recorridos y mantenimientos. ¿Quieres continuar?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    // On success the auth session becomes null and the router redirects to
+    // the login screen automatically.
+    await ref.read(authControllerProvider.notifier).deleteAccount();
   }
 }
 

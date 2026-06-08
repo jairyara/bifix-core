@@ -215,6 +215,7 @@ class _ModeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final framing = ModeFraming.of(mode);
+    final accent = framing.accentFor(Theme.of(context).brightness);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -224,16 +225,14 @@ class _ModeBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(framing.icon, size: 16, color: framing.accent),
+          Icon(framing.icon, size: 16, color: accent),
           const SizedBox(width: 6),
           Text(
             mode == RidingMode.estimation
                 ? 'Modo privacidad'
                 : 'Modo asistente',
             style: TextStyle(
-                color: framing.accent,
-                fontWeight: FontWeight.w600,
-                fontSize: 12),
+                color: accent, fontWeight: FontWeight.w600, fontSize: 12),
           ),
         ],
       ),

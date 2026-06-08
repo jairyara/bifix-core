@@ -28,7 +28,8 @@ class RidesScreen extends ConsumerWidget {
           ? null
           : isTracking
               ? FloatingActionButton.extended(
-                  backgroundColor: ModeFraming.of(RidingMode.tracking).accent,
+                  backgroundColor: ModeFraming.of(RidingMode.tracking)
+                      .accentFor(Theme.of(context).brightness),
                   foregroundColor: Colors.white,
                   onPressed: () => context.push(Routes.tracking),
                   icon: const Icon(Icons.play_arrow),
@@ -73,6 +74,7 @@ class _ModeBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final framing = ModeFraming.of(mode);
+    final accent = framing.accentFor(Theme.of(context).brightness);
     String subtitle;
     if (mode == RidingMode.estimation) {
       final profile =
@@ -95,13 +97,13 @@ class _ModeBanner extends ConsumerWidget {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: framing.accent.withValues(alpha: 0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: framing.accent.withValues(alpha: 0.25)),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
-          Icon(framing.icon, color: framing.accent),
+          Icon(framing.icon, color: accent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -109,7 +111,7 @@ class _ModeBanner extends ConsumerWidget {
               children: [
                 Text(framing.badge,
                     style: TextStyle(
-                        color: framing.accent, fontWeight: FontWeight.w700)),
+                        color: accent, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style: Theme.of(context).textTheme.bodySmall),

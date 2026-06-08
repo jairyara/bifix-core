@@ -27,6 +27,16 @@ class ModeFraming {
   final List<String> bullets;
   final String? footnote;
 
+  /// Accent adjusted to stay legible on the current surface. In dark mode it
+  /// lifts dark accents (e.g. the "Azul Datos" assistant accent) while keeping
+  /// the hue, so badges/icons/checks don't disappear on the dark background.
+  Color accentFor(Brightness brightness) {
+    if (brightness != Brightness.dark) return accent;
+    final hsl = HSLColor.fromColor(accent);
+    if (hsl.lightness >= 0.5) return accent;
+    return hsl.withLightness(0.62).toColor();
+  }
+
   static const _privacyAccent = AppTheme.verdeExito; // Verde Éxito
   static const _assistantAccent = AppTheme.azulDatos; // Azul Datos
 

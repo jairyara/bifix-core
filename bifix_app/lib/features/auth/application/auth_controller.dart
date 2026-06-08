@@ -51,6 +51,15 @@ class AuthController extends AsyncNotifier<User?> {
     await repo.logout();
     state = const AsyncValue.data(null);
   }
+
+  Future<void> requestPasswordReset(String email) {
+    return ref.read(authRepositoryProvider).requestPasswordReset(email);
+  }
+
+  Future<void> deleteAccount() async {
+    await ref.read(authRepositoryProvider).deleteAccount();
+    state = const AsyncValue.data(null);
+  }
 }
 
 final authControllerProvider =

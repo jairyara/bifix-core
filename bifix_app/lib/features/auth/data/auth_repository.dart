@@ -24,6 +24,13 @@ abstract class AuthRepository {
   Future<User> updateProfile(User user);
 
   Future<void> logout();
+
+  /// Requests a password reset for [email]. Always resolves without revealing
+  /// whether the email exists (anti-enumeration).
+  Future<void> requestPasswordReset(String email);
+
+  /// Permanently deletes the current user's account and clears the session.
+  Future<void> deleteAccount();
 }
 
 /// Talks to the real external API. Endpoints below are the agreed contract the
@@ -90,6 +97,18 @@ class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() => _tokenStorage.clear();
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    // Endpoint pending backend; shape follows the agreed contract.
+    await _client.post('/auth/forgot-password', body: {'email': email});
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    await _client.delete('/auth/me');
+    await _tokenStorage.clear();
+  }
 }
 
 /// In-memory implementation backed by [MockStore].
@@ -155,4 +174,20 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() => _tokenStorage.clear();
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    // Simulate the email send; never reveal whether the account exists.
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    final token = await _tokenStorage.read();
+    if (token != null && token.startsWith('mock:')) {
+      _store.deleteAccount(token.substring('mock:'.length));
+    }
+    await _tokenStorage.clear();
+  }
 }

@@ -94,6 +94,7 @@ class _DailyProfileSetupScreenState
   @override
   Widget build(BuildContext context) {
     final framing = ModeFraming.of(RidingMode.estimation);
+    final accent = framing.accentFor(Theme.of(context).brightness);
     return Scaffold(
       appBar: AppBar(title: const Text('Tu rutina')),
       body: SafeArea(
@@ -102,11 +103,11 @@ class _DailyProfileSetupScreenState
           children: [
             Row(
               children: [
-                Icon(framing.icon, color: framing.accent),
+                Icon(framing.icon, color: accent),
                 const SizedBox(width: 8),
                 Text(framing.badge,
                     style: TextStyle(
-                        color: framing.accent, fontWeight: FontWeight.w700)),
+                        color: accent, fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: 12),
@@ -161,12 +162,12 @@ class _DailyProfileSetupScreenState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: framing.accent.withValues(alpha: 0.08),
+                color: accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_month, color: framing.accent),
+                  Icon(Icons.calendar_month, color: accent),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

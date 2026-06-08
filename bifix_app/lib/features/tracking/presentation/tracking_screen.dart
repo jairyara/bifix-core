@@ -66,6 +66,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   Widget build(BuildContext context) {
     final bike = ref.watch(selectedBikeProvider);
     final framing = ModeFraming.of(RidingMode.tracking);
+    final accent = framing.accentFor(Theme.of(context).brightness);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Asistente')),
@@ -84,19 +85,19 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: framing.accent.withValues(alpha: 0.12),
+                        color: accent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(framing.icon, color: framing.accent, size: 18),
+                          Icon(framing.icon, color: accent, size: 18),
                           const SizedBox(width: 6),
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Text(framing.badge,
                                 style: TextStyle(
-                                    color: framing.accent,
+                                    color: accent,
                                     fontWeight: FontWeight.w700)),
                           ),
                         ],
@@ -105,7 +106,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                     const SizedBox(height: 24),
                     _PulseRing(
                       active: _running,
-                      accent: framing.accent,
+                      accent: accent,
                       child: Text(
                         _clock,
                         style: Theme.of(context)
@@ -136,7 +137,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                     if (!_running)
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
-                            backgroundColor: framing.accent),
+                            backgroundColor: accent),
                         onPressed: _start,
                         icon: const Icon(Icons.play_arrow),
                         label: const Text('Iniciar recorrido'),

@@ -209,33 +209,54 @@ class _HistoryTab extends ConsumerWidget {
             subtitle: 'Cuando registres un mantenimiento aparecerá aquí.',
           );
         }
+        final totalCents =
+            records.fold<int>(0, (sum, r) => sum + (r.costCents ?? 0));
         return RefreshIndicator(
           onRefresh: () async =>
               ref.invalidate(recordsControllerProvider(bikeId)),
-          child: ListView.separated(
+          child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-            itemCount: records.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (_, i) {
-              final r = records[i];
-              return Card(
-                child: ListTile(
-                  leading: CircleAvatar(child: Icon(iconForTask(r.taskId))),
-                  title: Text(taskName(r.taskId)),
-                  subtitle: Text([
-                    Fmt.date(r.date),
-                    Fmt.km(r.odometerKm),
-                    if (r.notes != null) r.notes!,
-                  ].join(' · ')),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => ref
-                        .read(recordsControllerProvider(bikeId).notifier)
-                        .delete(r.id),
+            children: [
+              if (totalCents > 0) ...[
+                Card(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer
+                      .withValues(alpha: 0.5),
+                  child: ListTile(
+                    leading: const Icon(Icons.payments_outlined),
+                    title: const Text('Total invertido'),
+                    trailing: Text(
+                      Fmt.money(totalCents),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 8),
+              ],
+              for (final r in records) ...[
+                Card(
+                  child: ListTile(
+                    leading: CircleAvatar(child: Icon(iconForTask(r.taskId))),
+                    title: Text(taskName(r.taskId)),
+                    subtitle: Text([
+                      Fmt.date(r.date),
+                      Fmt.km(r.odometerKm),
+                      if (r.costCents != null) Fmt.money(r.costCents!),
+                      if (r.notes != null) r.notes!,
+                    ].join(' · ')),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => ref
+                          .read(recordsControllerProvider(bikeId).notifier)
+                          .delete(r.id),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
           ),
         );
       },

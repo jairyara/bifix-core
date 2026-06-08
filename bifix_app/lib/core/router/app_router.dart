@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/application/auth_controller.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/home/presentation/dashboard_screen.dart';
@@ -23,6 +24,7 @@ abstract class Routes {
   static const splash = '/splash';
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/forgot-password';
   static const home = '/';
   static const rides = '/rides';
   static const maintenance = '/maintenance';
@@ -51,7 +53,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
       final atSplash = loc == Routes.splash;
-      final atAuth = loc == Routes.login || loc == Routes.register;
+      final atAuth = loc == Routes.login ||
+          loc == Routes.register ||
+          loc == Routes.forgotPassword;
       final atOnboarding =
           loc == Routes.onboarding || loc == Routes.onboardingEstimation;
 
@@ -89,6 +93,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.register,
         builder: (_, _) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: Routes.forgotPassword,
+        builder: (_, _) => const ForgotPasswordScreen(),
       ),
       GoRoute(
         path: Routes.onboarding,

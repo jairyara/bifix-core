@@ -97,6 +97,7 @@ class MockStore {
         date: now.subtract(const Duration(days: 40)),
         odometerKm: 300,
         notes: 'Cambio de pastillas delanteras.',
+        costCents: 4500000, // $45.000
       ),
     );
   }
@@ -152,6 +153,13 @@ class MockStore {
     );
     _accounts.add(_Account(user: user, password: password));
     return user;
+  }
+
+  /// Removes an account and its preferences (mock demo data is otherwise
+  /// global, so bikes/rides stay for the next demo session).
+  void deleteAccount(String userId) {
+    _accounts.removeWhere((a) => a.user.id == userId);
+    _preferences.remove(userId);
   }
 
   /// Replaces the stored user for [userId] and returns the updated copy.
