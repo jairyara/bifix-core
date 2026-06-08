@@ -14,6 +14,7 @@ import '../../features/preferences/application/preferences_controller.dart';
 import '../../features/profile/presentation/bike_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/rides/presentation/rides_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/tracking/presentation/tracking_screen.dart';
 
@@ -31,6 +32,7 @@ abstract class Routes {
   static const onboarding = '/onboarding';
   static const onboardingEstimation = '/onboarding/estimacion';
   static const tracking = '/tracking';
+  static const settings = '/profile/settings';
 }
 
 final _rootKey = GlobalKey<NavigatorState>();
@@ -102,6 +104,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.tracking,
         parentNavigatorKey: _rootKey,
         builder: (_, _) => const TrackingScreen(),
+      ),
+      GoRoute(
+        path: Routes.settings,
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const SettingsScreen(),
       ),
       GoRoute(
         path: Routes.addBike,
