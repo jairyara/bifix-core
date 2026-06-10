@@ -32,6 +32,9 @@ ENV PHP_OPCACHE_ENABLE=1 \
 
 USER root
 
+# Extensiones PHP que Laravel suele necesitar y no vienen por defecto
+RUN install-php-extensions intl
+
 WORKDIR /var/www/html
 
 COPY --chown=www-data:www-data . .
