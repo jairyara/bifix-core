@@ -51,12 +51,12 @@ class DailyEstimateProfile {
   }
 
   factory DailyEstimateProfile.fromJson(Map<String, dynamic> json) {
-    final days = (json['activeWeekdays'] as List?)
+    final days = (json['active_weekdays'] as List?)
             ?.map((e) => (e as num).toInt())
             .toSet() ??
         {1, 2, 3, 4, 5};
     return DailyEstimateProfile(
-      dailyKm: (json['dailyKm'] as num?)?.toDouble() ?? 0,
+      dailyKm: (json['daily_km'] as num?)?.toDouble() ?? 0,
       activeWeekdays: days,
       since: DateTime.tryParse(json['since']?.toString() ?? '') ??
           DateTime.now(),
@@ -64,8 +64,8 @@ class DailyEstimateProfile {
   }
 
   Map<String, dynamic> toJson() => {
-        'dailyKm': dailyKm,
-        'activeWeekdays': activeWeekdays.toList()..sort(),
+        'daily_km': dailyKm,
+        'active_weekdays': activeWeekdays.toList()..sort(),
         'since': since.toIso8601String(),
       };
 }
@@ -92,17 +92,17 @@ class UserPreferences {
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
     return UserPreferences(
-      ridingMode: RidingModeX.tryParse(json['ridingMode'] as String?),
-      dailyProfile: json['dailyProfile'] is Map<String, dynamic>
+      ridingMode: RidingModeX.tryParse(json['riding_mode'] as String?),
+      dailyProfile: json['daily_profile'] is Map<String, dynamic>
           ? DailyEstimateProfile.fromJson(
-              json['dailyProfile'] as Map<String, dynamic>)
+              json['daily_profile'] as Map<String, dynamic>)
           : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'ridingMode': ridingMode?.apiValue,
-        'dailyProfile': dailyProfile?.toJson(),
+        'riding_mode': ridingMode?.apiValue,
+        'daily_profile': dailyProfile?.toJson(),
       };
 
   static const empty = UserPreferences();

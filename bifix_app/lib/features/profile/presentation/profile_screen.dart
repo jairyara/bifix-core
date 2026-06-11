@@ -323,7 +323,7 @@ class _ModeSection extends ConsumerWidget {
                     label: const Text('Editar promedio'),
                   ),
                 TextButton.icon(
-                  onPressed: () => context.push(Routes.onboarding),
+                  onPressed: () => context.push(Routes.onboardingMode),
                   icon: const Icon(Icons.swap_horiz, size: 18),
                   label: const Text('Cambiar modo'),
                 ),

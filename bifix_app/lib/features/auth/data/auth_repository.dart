@@ -41,6 +41,10 @@ class HttpAuthRepository implements AuthRepository {
   final ApiClient _client;
   final TokenStorage _tokenStorage;
 
+  /// Sanctum names each issued token per device. The app has no multi-device
+  /// management yet, so a stable constant is enough.
+  static const String _deviceName = 'vikla-mobile';
+
   @override
   Future<AuthSession> register({
     required String name,
@@ -52,6 +56,8 @@ class HttpAuthRepository implements AuthRepository {
       'name': name,
       'email': email,
       'password': password,
+      'password_confirmation': password,
+      'device_name': _deviceName,
       'phone': ?phone,
     });
     final session = AuthSession.fromJson(json);
@@ -67,6 +73,7 @@ class HttpAuthRepository implements AuthRepository {
     final json = await _client.post('/auth/login', body: {
       'email': email,
       'password': password,
+      'device_name': _deviceName,
     });
     final session = AuthSession.fromJson(json);
     await _tokenStorage.write(session.token);

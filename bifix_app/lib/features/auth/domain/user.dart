@@ -20,8 +20,8 @@ class User {
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String?,
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString())
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
     );
   }
@@ -31,7 +31,7 @@ class User {
         'name': name,
         'email': email,
         if (phone != null) 'phone': phone,
-        if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+        if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
       };
 
   User copyWith({String? name, String? email, String? phone}) {

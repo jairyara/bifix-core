@@ -12,6 +12,7 @@ import '../../features/maintenance/presentation/maintenance_screen.dart';
 import '../../features/onboarding/presentation/daily_profile_setup_screen.dart';
 import '../../features/onboarding/presentation/mode_selection_screen.dart';
 import '../../features/preferences/application/preferences_controller.dart';
+import '../../features/profile/application/bikes_controller.dart';
 import '../../features/profile/presentation/bike_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/rides/presentation/rides_screen.dart';
@@ -32,6 +33,7 @@ abstract class Routes {
   static const addBike = '/profile/bike/new';
   static const editBike = '/profile/bike/edit';
   static const onboarding = '/onboarding';
+  static const onboardingMode = '/onboarding/modo';
   static const onboardingEstimation = '/onboarding/estimacion';
   static const tracking = '/tracking';
   static const settings = '/profile/settings';
@@ -56,8 +58,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final atAuth = loc == Routes.login ||
           loc == Routes.register ||
           loc == Routes.forgotPassword;
-      final atOnboarding =
-          loc == Routes.onboarding || loc == Routes.onboardingEstimation;
+      final atOnboarding = loc == Routes.onboarding ||
+          loc == Routes.onboardingMode ||
+          loc == Routes.onboardingEstimation;
 
       // Still restoring the persisted session: stay on splash.
       if (auth.isLoading && !auth.hasValue) {
@@ -73,9 +76,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         return atSplash ? null : Routes.splash;
       }
 
-      // First-run users must choose a riding mode before entering the app.
+      // First-run users go through onboarding: register their first bike
+      // ("registro de inicio") and then pick a riding mode.
       final needsOnboarding = prefs.valueOrNull?.needsOnboarding ?? false;
-      if (needsOnboarding && !atOnboarding) return Routes.onboarding;
+      if (needsOnboarding) {
+        if (!atOnboarding) return Routes.onboarding;
+        // On the bike step but a bike already exists → skip to the mode step.
+        if (loc == Routes.onboarding) {
+          final bikes = ref.read(bikesControllerProvider).valueOrNull;
+          if (bikes != null && bikes.isNotEmpty) return Routes.onboardingMode;
+        }
+      }
 
       // Onboarded user sitting on an entry screen → go to the app.
       if (!needsOnboarding && (atAuth || atSplash)) return Routes.home;
@@ -100,6 +111,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.onboarding,
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const BikeFormScreen(onboarding: true),
+      ),
+      GoRoute(
+        path: Routes.onboardingMode,
         parentNavigatorKey: _rootKey,
         builder: (_, _) => const ModeSelectionScreen(),
       ),
@@ -170,6 +186,8 @@ class _AuthRefresh extends ChangeNotifier {
     _subs = [
       ref.listen(authControllerProvider, (_, _) => notifyListeners()),
       ref.listen(preferencesControllerProvider, (_, _) => notifyListeners()),
+      // Onboarding's bike step skips forward once a bike exists.
+      ref.listen(bikesControllerProvider, (_, _) => notifyListeners()),
     ];
   }
 

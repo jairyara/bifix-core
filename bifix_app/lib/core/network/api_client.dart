@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../error/failures.dart';
@@ -32,6 +33,34 @@ class ApiClient {
         },
       ),
     );
+
+    // Verbose request/response/error logging so every API call and failure
+    // (404/422/405/500…) is visible in the console while integrating against
+    // the real backend. Debug builds only.
+    if (kDebugMode) {
+      _dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            debugPrint('→ ${options.method} ${options.uri}');
+            if (options.data != null) debugPrint('  body: ${options.data}');
+            handler.next(options);
+          },
+          onResponse: (response, handler) {
+            debugPrint(
+                '← ${response.statusCode} ${response.requestOptions.method} '
+                '${response.requestOptions.uri}');
+            handler.next(response);
+          },
+          onError: (e, handler) {
+            debugPrint(
+                '✖ ${e.response?.statusCode ?? e.type} '
+                '${e.requestOptions.method} ${e.requestOptions.uri}');
+            debugPrint('  error: ${e.response?.data ?? e.message}');
+            handler.next(e);
+          },
+        ),
+      );
+    }
   }
 
   final Dio _dio;
@@ -59,7 +88,14 @@ class ApiClient {
     try {
       final response = await request();
       final data = response.data;
-      if (data is Map<String, dynamic>) return data;
+      if (data is Map<String, dynamic>) {
+        // Laravel API Resources wrap a single resource in {"data": {...}}.
+        // Unwrap it so repos read fields at the root. Collections
+        // ({"data": [...]}) are left intact; their repos read the list
+        // explicitly via json['data'].
+        final inner = data['data'];
+        return inner is Map<String, dynamic> ? inner : data;
+      }
       if (data is List) return {'data': data};
       return <String, dynamic>{};
     } on DioException catch (e) {

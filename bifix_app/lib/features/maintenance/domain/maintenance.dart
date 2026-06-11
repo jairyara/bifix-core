@@ -31,8 +31,8 @@ class MaintenanceTask {
       id: json['id'].toString(),
       name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      intervalKm: (json['intervalKm'] as num?)?.toDouble(),
-      intervalDays: (json['intervalDays'] as num?)?.toInt(),
+      intervalKm: (json['interval_km'] as num?)?.toDouble(),
+      intervalDays: (json['interval_days'] as num?)?.toInt(),
     );
   }
 
@@ -40,8 +40,8 @@ class MaintenanceTask {
         'id': id,
         'name': name,
         'description': description,
-        if (intervalKm != null) 'intervalKm': intervalKm,
-        if (intervalDays != null) 'intervalDays': intervalDays,
+        if (intervalKm != null) 'interval_km': intervalKm,
+        if (intervalDays != null) 'interval_days': intervalDays,
       };
 }
 
@@ -70,23 +70,23 @@ class MaintenanceRecord {
   factory MaintenanceRecord.fromJson(Map<String, dynamic> json) {
     return MaintenanceRecord(
       id: json['id'].toString(),
-      bikeId: json['bikeId'].toString(),
-      taskId: json['taskId'].toString(),
+      bikeId: json['bike_id'].toString(),
+      taskId: json['task_id'].toString(),
       date: DateTime.tryParse(json['date'].toString()) ?? DateTime.now(),
-      odometerKm: (json['odometerKm'] as num?)?.toDouble() ?? 0,
+      odometerKm: (json['odometer_km'] as num?)?.toDouble() ?? 0,
       notes: json['notes'] as String?,
-      costCents: (json['costCents'] as num?)?.toInt(),
+      costCents: (json['cost_cents'] as num?)?.toInt(),
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'bikeId': bikeId,
-        'taskId': taskId,
+        'bike_id': bikeId,
+        'task_id': taskId,
         'date': date.toIso8601String(),
-        'odometerKm': odometerKm,
+        'odometer_km': odometerKm,
         if (notes != null) 'notes': notes,
-        if (costCents != null) 'costCents': costCents,
+        if (costCents != null) 'cost_cents': costCents,
       };
 }
 

@@ -37,11 +37,11 @@ class Ride {
   factory Ride.fromJson(Map<String, dynamic> json) {
     return Ride(
       id: json['id'].toString(),
-      bikeId: json['bikeId'].toString(),
+      bikeId: json['bike_id'].toString(),
       title: json['title'] as String? ?? 'Recorrido',
       date: DateTime.tryParse(json['date'].toString()) ?? DateTime.now(),
-      distanceKm: (json['distanceKm'] as num?)?.toDouble() ?? 0,
-      durationMinutes: (json['durationMinutes'] as num?)?.toInt(),
+      distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
       source: switch (json['source']) {
         'manual' => RideSource.manual,
         'tracked' => RideSource.tracked,
@@ -53,11 +53,11 @@ class Ride {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'bikeId': bikeId,
+        'bike_id': bikeId,
         'title': title,
         'date': date.toIso8601String(),
-        'distanceKm': distanceKm,
-        if (durationMinutes != null) 'durationMinutes': durationMinutes,
+        'distance_km': distanceKm,
+        if (durationMinutes != null) 'duration_minutes': durationMinutes,
         'source': source.name,
         if (notes != null) 'notes': notes,
       };

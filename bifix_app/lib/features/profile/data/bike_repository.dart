@@ -43,7 +43,7 @@ class HttpBikeRepository implements BikeRepository {
   @override
   Future<double> odometer(String bikeId) async {
     final json = await _client.get('/bikes/$bikeId/odometer');
-    return (json['odometerKm'] as num?)?.toDouble() ?? 0;
+    return (json['odometer_km'] as num?)?.toDouble() ?? 0;
   }
 }
 

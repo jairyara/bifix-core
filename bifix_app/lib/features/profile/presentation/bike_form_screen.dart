@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/utils/format.dart';
 import '../../catalog/presentation/model_picker_sheet.dart';
 import '../application/bikes_controller.dart';
 import '../domain/bike.dart';
 
 /// Add or edit a bike. When [bikeId] is null we create a new one.
+///
+/// When [onboarding] is true this is the first onboarding step ("registro de
+/// inicio"): saving advances to the riding-mode step instead of popping.
 class BikeFormScreen extends ConsumerStatefulWidget {
-  const BikeFormScreen({super.key, this.bikeId});
+  const BikeFormScreen({super.key, this.bikeId, this.onboarding = false});
   final String? bikeId;
+  final bool onboarding;
 
   @override
   ConsumerState<BikeFormScreen> createState() => _BikeFormScreenState();
@@ -73,7 +79,13 @@ class _BikeFormScreenState extends ConsumerState<BikeFormScreen> {
         final created = await controller.add(data);
         ref.read(selectedBikeIdProvider.notifier).state = created.id;
       }
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      if (widget.onboarding) {
+        // Registro de inicio done → continue to the riding-mode step.
+        context.go(Routes.onboardingMode);
+      } else {
+        Navigator.of(context).pop();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -140,7 +152,12 @@ class _BikeFormScreenState extends ConsumerState<BikeFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Editar bici' : 'Agregar bici'),
+        title: Text(_isEditing
+            ? 'Editar bici'
+            : widget.onboarding
+                ? 'Registra tu bici'
+                : 'Agregar bici'),
+        automaticallyImplyLeading: !widget.onboarding,
         actions: [
           if (_isEditing)
             IconButton(
@@ -271,7 +288,11 @@ class _BikeFormScreenState extends ConsumerState<BikeFormScreen> {
                           width: 22,
                           child: CircularProgressIndicator(
                               strokeWidth: 2.5, color: Colors.white))
-                      : Text(_isEditing ? 'Guardar cambios' : 'Agregar bici'),
+                      : Text(_isEditing
+                          ? 'Guardar cambios'
+                          : widget.onboarding
+                              ? 'Continuar'
+                              : 'Agregar bici'),
                 ),
               ],
             ),

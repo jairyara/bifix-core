@@ -36,10 +36,10 @@ class Bike {
       brand: json['brand'] as String?,
       model: json['model'] as String?,
       year: (json['year'] as num?)?.toInt(),
-      batteryWh: (json['batteryWh'] as num?)?.toInt(),
-      baselineKm: (json['baselineKm'] as num?)?.toDouble() ?? 0,
-      purchaseDate: json['purchaseDate'] != null
-          ? DateTime.tryParse(json['purchaseDate'].toString())
+      batteryWh: (json['battery_wh'] as num?)?.toInt(),
+      baselineKm: (json['baseline_km'] as num?)?.toDouble() ?? 0,
+      purchaseDate: json['purchase_date'] != null
+          ? DateTime.tryParse(json['purchase_date'].toString())
           : null,
     );
   }
@@ -50,10 +50,10 @@ class Bike {
         if (brand != null) 'brand': brand,
         if (model != null) 'model': model,
         if (year != null) 'year': year,
-        if (batteryWh != null) 'batteryWh': batteryWh,
-        'baselineKm': baselineKm,
+        if (batteryWh != null) 'battery_wh': batteryWh,
+        'baseline_km': baselineKm,
         if (purchaseDate != null)
-          'purchaseDate': purchaseDate!.toIso8601String(),
+          'purchase_date': purchaseDate!.toIso8601String(),
       };
 
   Bike copyWith({

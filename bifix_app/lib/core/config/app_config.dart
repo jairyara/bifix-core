@@ -12,14 +12,15 @@ class AppConfig {
   ///   flutter run --dart-define=API_BASE_URL=https://api.vikla.app/api/v1
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.vikla.local/api/v1',
+    defaultValue: 'https://api.jairyara.dev/api/v1',
   );
 
   /// When true, the app uses in-memory mock data instead of hitting the API.
-  /// Defaults to true so the frontend runs standalone while the backend is
-  /// still being built.
+  /// Now defaults to false so the IDE "Run" button hits the real prod API
+  /// during integration. Pass `--dart-define=USE_MOCK_API=true` to go back to
+  /// the standalone mock demo.
   static const bool useMockApi = bool.fromEnvironment(
     'USE_MOCK_API',
-    defaultValue: true,
+    defaultValue: false,
   );
 }

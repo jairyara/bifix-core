@@ -1,10 +1,10 @@
 /// Reference catalog served by the backend: brands, bike models and battery
 /// types used to identify a bike precisely. Read-only on the client.
 ///
-/// NOTE: `fromJson` mirrors the *current* Laravel API resources (snake_case).
-/// The global naming convention is still being agreed with the backend team;
-/// these mappings are only exercised when running against the real API (the
-/// catalog HTTP repo), so revisit them once that decision is settled.
+/// NOTE: `fromJson` mirrors the Laravel API resources (snake_case), which is
+/// the agreed project-wide convention — every model serializes in snake_case
+/// to match the backend. These mappings are exercised only against the real
+/// API (the catalog HTTP repo).
 library;
 
 class Brand {
